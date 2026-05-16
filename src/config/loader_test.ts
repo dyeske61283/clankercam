@@ -48,3 +48,18 @@ Deno.test("loadConfig respects custom probePaths", async () => {
     await Deno.remove(tempFile);
   }
 });
+
+Deno.test("loadConfig throws helpful error on malformed JSON", async () => {
+  const tempFile = await Deno.makeTempFile({ suffix: ".json" });
+  await Deno.writeTextFile(tempFile, "{ invalid json: ");
+
+  try {
+    await loadConfig(tempFile);
+    throw new Error("Should have thrown");
+  } catch (error) {
+    assertEquals(error instanceof Error, true);
+    assertEquals((error as Error).message.includes("Failed to parse config"), true);
+  } finally {
+    await Deno.remove(tempFile);
+  }
+});

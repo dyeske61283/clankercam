@@ -10,7 +10,15 @@ export async function loadConfig(
   ];
   try {
     const configContent = await Deno.readTextFile(configPath);
-    const config = JSON.parse(configContent) as ClankerCamConfig;
+    let config: ClankerCamConfig;
+    try {
+      config = JSON.parse(configContent) as ClankerCamConfig;
+    } catch (e) {
+      if (e instanceof SyntaxError) {
+        throw new Error(`Failed to parse config at ${configPath}: ${e.message}`);
+      }
+      throw e;
+    }
     return {
       ...config,
       probePaths: config.probePaths ?? defaultProbePaths,
