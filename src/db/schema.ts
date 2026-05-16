@@ -1,8 +1,8 @@
-import { DB } from "https://deno.land/x/sqlite/mod.ts";
+import { DB } from "@sqlite";
 
 export function initDb(path: string) {
   const db = new DB(path);
-  
+
   db.execute(`
     CREATE TABLE IF NOT EXISTS projects (
       id TEXT PRIMARY KEY,

@@ -1,74 +1,74 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
+  <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>ClankerCam - Gemini CLI Analytics</title>
     <link rel="stylesheet" href="style.css">
-</head>
-<body>
+  </head>
+  <body>
     <header>
-        <h1>ClankerCam</h1>
-        <nav>
-            <button id="nav-global">Overview</button>
-            <button id="nav-projects">Projects</button>
-        </nav>
+      <h1>ClankerCam</h1>
+      <nav>
+        <button id="nav-global">Overview</button>
+        <button id="nav-projects">Projects</button>
+      </nav>
     </header>
 
     <main id="app">
-        <!-- Content injected here -->
-        <div id="loader">Loading...</div>
+      <!-- Content injected here -->
+      <div id="loader">Loading...</div>
     </main>
 
     <template id="tpl-global">
-        <section class="overview">
-            <h2>Global Overview</h2>
-            <div class="stats-grid">
-                <div class="stat-card">
-                    <h3>Sessions</h3>
-                    <p id="stat-sessions">-</p>
-                </div>
-                <div class="stat-card">
-                    <h3>Tool Calls</h3>
-                    <p id="stat-tools">-</p>
-                </div>
-                <div class="stat-card">
-                    <h3>Tokens</h3>
-                    <p id="stat-tokens">-</p>
-                </div>
-            </div>
-            <div class="charts">
-                <div class="chart-container">
-                    <h3>Top Tools</h3>
-                    <ul id="list-top-tools"></ul>
-                </div>
-            </div>
-        </section>
+      <section class="overview">
+        <h2>Global Overview</h2>
+        <div class="stats-grid">
+          <div class="stat-card">
+            <h3>Sessions</h3>
+            <p id="stat-sessions">-</p>
+          </div>
+          <div class="stat-card">
+            <h3>Tool Calls</h3>
+            <p id="stat-tools">-</p>
+          </div>
+          <div class="stat-card">
+            <h3>Tokens</h3>
+            <p id="stat-tokens">-</p>
+          </div>
+        </div>
+        <div class="charts">
+          <div class="chart-container">
+            <h3>Top Tools</h3>
+            <ul id="list-top-tools"></ul>
+          </div>
+        </div>
+      </section>
     </template>
 
     <template id="tpl-projects">
-        <section class="projects">
-            <h2>Projects</h2>
-            <div id="project-list" class="grid"></div>
-        </section>
+      <section class="projects">
+        <h2>Projects</h2>
+        <div id="project-list" class="grid"></div>
+      </section>
     </template>
 
     <template id="tpl-sessions">
-        <section class="sessions">
-            <h2 id="project-name">Sessions</h2>
-            <button class="back-btn">&larr; Back to Projects</button>
-            <div id="session-list" class="list"></div>
-        </section>
+      <section class="sessions">
+        <h2 id="project-name">Sessions</h2>
+        <button class="back-btn">&larr; Back to Projects</button>
+        <div id="session-list" class="list"></div>
+      </section>
     </template>
 
     <template id="tpl-inspector">
-        <section class="inspector">
-            <h2 id="session-title">Session Details</h2>
-            <button class="back-btn">&larr; Back to Sessions</button>
-            <div id="message-list" class="messages"></div>
-        </section>
+      <section class="inspector">
+        <h2 id="session-title">Session Details</h2>
+        <button class="back-btn">&larr; Back to Sessions</button>
+        <div id="message-list" class="messages"></div>
+      </section>
     </template>
 
     <script src="app.js"></script>
-</body>
+  </body>
 </html>

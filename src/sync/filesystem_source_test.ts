@@ -1,6 +1,6 @@
-import { assertEquals } from "https://deno.land/std/assert/mod.ts";
+import { assertEquals } from "@std/assert";
 import { FileSystemSessionSource } from "./filesystem_source.ts";
-import { join } from "https://deno.land/std/path/mod.ts";
+import { join } from "@std/path";
 
 Deno.test("FileSystemSessionSource.listProjects() lists directories in the root", async () => {
   const tempDir = await Deno.makeTempDir();
@@ -38,10 +38,13 @@ Deno.test("FileSystemSessionSource.listSessions() lists sessions in project/chat
       startTime: new Date().toISOString(),
       lastUpdated: new Date().toISOString(),
       kind: "chat",
-      messages: []
+      messages: [],
     };
 
-    await Deno.writeTextFile(join(chatsPath, "session1.json"), JSON.stringify(sessionData));
+    await Deno.writeTextFile(
+      join(chatsPath, "session1.json"),
+      JSON.stringify(sessionData),
+    );
 
     const source = new FileSystemSessionSource(tempDir);
     const sessions = [];

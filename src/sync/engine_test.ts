@@ -1,4 +1,4 @@
-import { assertEquals } from "https://deno.land/std/assert/mod.ts";
+import { assertEquals } from "@std/assert";
 import { initDb } from "../db/schema.ts";
 import { syncSessions } from "./engine.ts";
 import { SessionData } from "../types/session.ts";
@@ -34,7 +34,7 @@ Deno.test("syncSessions persists data from SessionSource to DB", async () => {
           projectHash: "p1",
           startTime: "2024-01-01T00:00:00Z",
           lastUpdated: "2024-01-01T00:01:00Z",
-          kind: "chat"
+          kind: "chat",
         },
         messages: [
           {
@@ -42,10 +42,10 @@ Deno.test("syncSessions persists data from SessionSource to DB", async () => {
             type: "user",
             content: "hello",
             timestamp: "2024-01-01T00:00:05Z",
-            tokenUsage: { input: 10, output: 5, total: 15 }
-          }
-        ]
-      }
+            tokenUsage: { input: 10, output: 5, total: 15 },
+          },
+        ],
+      },
     ];
 
     await syncSessions(db, source);
@@ -59,7 +59,9 @@ Deno.test("syncSessions persists data from SessionSource to DB", async () => {
     const messages = db.query("SELECT id, session_id, content FROM messages");
     assertEquals(messages, [["m1", "s1", "hello"]]);
 
-    const usage = db.query("SELECT input_tokens, output_tokens FROM token_usage");
+    const usage = db.query(
+      "SELECT input_tokens, output_tokens FROM token_usage",
+    );
     assertEquals(usage, [[10, 5]]);
   } finally {
     db.close();

@@ -1,5 +1,5 @@
-import { Hono } from "https://deno.land/x/hono/mod.ts";
-import { DB } from "https://deno.land/x/sqlite/mod.ts";
+import { Hono } from "@hono/hono";
+import { DB } from "@sqlite";
 import { SQLiteSessionRepository } from "../db/repository.ts";
 
 export function createApi(db: DB) {

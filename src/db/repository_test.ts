@@ -1,4 +1,4 @@
-import { assertEquals } from "https://deno.land/std/assert/mod.ts";
+import { assertEquals } from "@std/assert";
 import { initDb } from "./schema.ts";
 import { SQLiteSessionRepository } from "./repository.ts";
 
@@ -13,7 +13,7 @@ Deno.test("SessionRepository handles data persistence and retrieval", () => {
       projectHash: "p1",
       startTime: "2024-01-01T00:00:00Z",
       lastUpdated: "2024-01-01T00:01:00Z",
-      kind: "chat"
+      kind: "chat",
     },
     messages: [
       {
@@ -21,10 +21,9 @@ Deno.test("SessionRepository handles data persistence and retrieval", () => {
         type: "user",
         content: "hello",
         timestamp: "2024-01-01T00:00:05Z",
-        tokenUsage: { input: 5, output: 5, total: 10 }
-
-      }
-    ]
+        tokenUsage: { input: 5, output: 5, total: 10 },
+      },
+    ],
   });
   repo.saveTokenUsage("s1", 5, 5, 10);
 

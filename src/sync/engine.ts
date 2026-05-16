@@ -1,4 +1,4 @@
-import { DB } from "https://deno.land/x/sqlite/mod.ts";
+import { DB } from "@sqlite";
 import { SessionSource } from "./source.ts";
 import { SQLiteSessionRepository } from "../db/repository.ts";
 import { Session } from "../domain/session.ts";
@@ -11,7 +11,11 @@ export async function syncSessions(db: DB, source: SessionSource) {
   }
 }
 
-async function syncProjectSessions(projectHash: string, source: SessionSource, repository: SQLiteSessionRepository) {
+async function syncProjectSessions(
+  projectHash: string,
+  source: SessionSource,
+  repository: SQLiteSessionRepository,
+) {
   console.log(`Syncing project: ${projectHash}`);
   repository.saveProject(projectHash);
 
@@ -19,11 +23,16 @@ async function syncProjectSessions(projectHash: string, source: SessionSource, r
   for await (const sessionData of source.listSessions(projectHash)) {
     try {
       repository.saveSession(projectHash, sessionData);
-      
+
       const session = new Session(sessionData);
       const usage = session.tokenUsage;
       if (usage.total > 0) {
-        repository.saveTokenUsage(sessionData.metadata.sessionId, usage.input, usage.output, usage.total);
+        repository.saveTokenUsage(
+          sessionData.metadata.sessionId,
+          usage.input,
+          usage.output,
+          usage.total,
+        );
       }
       sessionCount++;
     } catch (err) {

@@ -1,21 +1,43 @@
-import { DB } from "https://deno.land/x/sqlite/mod.ts";
-import { SessionData, Message, ToolCall } from "../types/session.ts";
+import { DB } from "@sqlite";
+import { SessionData } from "../types/session.ts";
 
 export interface SessionRepository {
   saveSession(projectHash: string, session: SessionData): void;
   saveProject(projectHash: string): void;
-  saveTokenUsage(sessionId: string, inputTokens: number, outputTokens: number, totalTokens: number): void;
-  getGlobalStats(): { totalSessions: number, totalToolCalls: number, totalTokens: number, topTools: { name: string, count: number }[] };
-  getAllProjects(): { id: string, path: string, sessionCount: number }[];
-  getProjectSessions(projectId: string): { id: string, startTime: string, lastUpdated: string, kind: string, messageCount: number, toolCallCount: number }[];
-  getSession(sessionId: string): { sessionId: string, messages: any[] };
+  saveTokenUsage(
+    sessionId: string,
+    inputTokens: number,
+    outputTokens: number,
+    totalTokens: number,
+  ): void;
+  getGlobalStats(): {
+    totalSessions: number;
+    totalToolCalls: number;
+    totalTokens: number;
+    topTools: { name: string; count: number }[];
+  };
+  getAllProjects(): { id: string; path: string; sessionCount: number }[];
+  getProjectSessions(
+    projectId: string,
+  ): {
+    id: string;
+    startTime: string;
+    lastUpdated: string;
+    kind: string;
+    messageCount: number;
+    toolCallCount: number;
+  }[];
+  getSession(sessionId: string): { sessionId: string; messages: unknown[] };
 }
 
 export class SQLiteSessionRepository implements SessionRepository {
   constructor(private db: DB) {}
 
   saveProject(projectHash: string): void {
-    this.db.query("INSERT OR IGNORE INTO projects (id, path) VALUES (?, ?)", [projectHash, "unknown"]);
+    this.db.query("INSERT OR IGNORE INTO projects (id, path) VALUES (?, ?)", [
+      projectHash,
+      "unknown",
+    ]);
   }
 
   saveSession(projectHash: string, session: SessionData): void {
@@ -23,98 +45,161 @@ export class SQLiteSessionRepository implements SessionRepository {
 
     this.db.query(
       "INSERT OR REPLACE INTO sessions (id, project_id, start_time, last_updated, kind) VALUES (?, ?, ?, ?, ?)",
-      [metadata.sessionId, projectHash, metadata.startTime, metadata.lastUpdated, metadata.kind]
+      [
+        metadata.sessionId,
+        projectHash,
+        metadata.startTime,
+        metadata.lastUpdated,
+        metadata.kind,
+      ],
     );
 
     for (const msg of messages) {
       this.db.query(
         "INSERT OR REPLACE INTO messages (id, session_id, type, content, timestamp) VALUES (?, ?, ?, ?, ?)",
-        [msg.id, metadata.sessionId, msg.type, typeof msg.content === 'string' ? msg.content : JSON.stringify(msg.content), msg.timestamp]
+        [
+          msg.id,
+          metadata.sessionId,
+          msg.type,
+          typeof msg.content === "string"
+            ? msg.content
+            : JSON.stringify(msg.content),
+          msg.timestamp,
+        ],
       );
 
       if (msg.toolCalls) {
         for (const tc of msg.toolCalls) {
           this.db.query(
             "INSERT OR REPLACE INTO tool_calls (id, message_id, name, args, status, timestamp) VALUES (?, ?, ?, ?, ?, ?)",
-            [tc.id, msg.id, tc.name, JSON.stringify(tc.args), tc.status || "unknown", tc.timestamp || msg.timestamp]
+            [
+              tc.id,
+              msg.id,
+              tc.name,
+              JSON.stringify(tc.args),
+              tc.status || "unknown",
+              tc.timestamp || msg.timestamp,
+            ],
           );
         }
       }
     }
   }
 
-  saveTokenUsage(sessionId: string, inputTokens: number, outputTokens: number, totalTokens: number): void {
+  saveTokenUsage(
+    sessionId: string,
+    inputTokens: number,
+    outputTokens: number,
+    totalTokens: number,
+  ): void {
     this.db.query(
       "INSERT OR REPLACE INTO token_usage (session_id, input_tokens, output_tokens, total_tokens) VALUES (?, ?, ?, ?)",
-      [sessionId, inputTokens, outputTokens, totalTokens]
+      [sessionId, inputTokens, outputTokens, totalTokens],
     );
   }
 
   getGlobalStats() {
-    const totalSessions = this.db.query("SELECT count(*) FROM sessions")[0][0] as number;
-    const totalToolCalls = this.db.query("SELECT count(*) FROM tool_calls")[0][0] as number;
-    const totalTokens = (this.db.query("SELECT sum(total_tokens) FROM token_usage")[0][0] as number) || 0;
-    const topTools = this.db.query("SELECT name, count(*) as count FROM tool_calls GROUP BY name ORDER BY count DESC LIMIT 10");
-    
+    const totalSessions = this.db.query(
+      "SELECT count(*) FROM sessions",
+    )[0][0] as number;
+    const totalToolCalls = this.db.query(
+      "SELECT count(*) FROM tool_calls",
+    )[0][0] as number;
+    const totalTokens = (this.db.query(
+      "SELECT sum(total_tokens) FROM token_usage",
+    )[0][0] as number) || 0;
+    const topTools = this.db.query(
+      "SELECT name, count(*) as count FROM tool_calls GROUP BY name ORDER BY count DESC LIMIT 10",
+    );
+
     return {
       totalSessions,
       totalToolCalls,
       totalTokens,
-      topTools: topTools.map(([name, count]) => ({ name: name as string, count: count as number })),
+      topTools: topTools.map(([name, count]) => ({
+        name: name as string,
+        count: count as number,
+      })),
     };
   }
 
   getAllProjects() {
     const projects = this.db.query(`
-      SELECT p.id, p.path, count(s.id) as session_count 
-      FROM projects p 
-      LEFT JOIN sessions s ON p.id = s.project_id 
+      SELECT p.id, p.path, count(s.id) as session_count
+      FROM projects p
+      LEFT JOIN sessions s ON p.id = s.project_id
       GROUP BY p.id
     `);
-    
-    return projects.map(([id, path, sessionCount]) => ({ id: id as string, path: path as string, sessionCount: sessionCount as number }));
+
+    return projects.map(([id, path, sessionCount]) => ({
+      id: id as string,
+      path: path as string,
+      sessionCount: sessionCount as number,
+    }));
   }
 
   getProjectSessions(projectId: string) {
-    const sessions = this.db.query(`
-      SELECT s.id, s.start_time, s.last_updated, s.kind, 
+    const sessions = this.db.query(
+      `
+      SELECT s.id, s.start_time, s.last_updated, s.kind,
              (SELECT count(*) FROM messages WHERE session_id = s.id) as message_count,
              (SELECT count(*) FROM tool_calls tc JOIN messages m ON tc.message_id = m.id WHERE m.session_id = s.id) as tool_call_count
       FROM sessions s
       WHERE s.project_id = ?
       ORDER BY s.start_time DESC
-    `, [projectId]);
-    
-    return sessions.map(([id, startTime, lastUpdated, kind, messageCount, toolCallCount]) => ({
-      id: id as string, startTime: startTime as string, lastUpdated: lastUpdated as string, kind: kind as string, 
-      messageCount: messageCount as number, toolCallCount: toolCallCount as number
+    `,
+      [projectId],
+    );
+
+    return sessions.map((
+      [id, startTime, lastUpdated, kind, messageCount, toolCallCount],
+    ) => ({
+      id: id as string,
+      startTime: startTime as string,
+      lastUpdated: lastUpdated as string,
+      kind: kind as string,
+      messageCount: messageCount as number,
+      toolCallCount: toolCallCount as number,
     }));
   }
 
   getSession(sessionId: string) {
-    const messages = this.db.query(`
-      SELECT id, type, content, timestamp 
-      FROM messages 
-      WHERE session_id = ? 
+    const messages = this.db.query(
+      `
+      SELECT id, type, content, timestamp
+      FROM messages
+      WHERE session_id = ?
       ORDER BY timestamp ASC
-    `, [sessionId]);
-    
+    `,
+      [sessionId],
+    );
+
     const result = [];
     for (const [id, type, content, timestamp] of messages) {
-      const toolCalls = this.db.query(`
-        SELECT id, name, args, status, timestamp 
-        FROM tool_calls 
+      const toolCalls = this.db.query(
+        `
+        SELECT id, name, args, status, timestamp
+        FROM tool_calls
         WHERE message_id = ?
-      `, [id as unknown as import("https://deno.land/x/sqlite/mod.ts").QueryParameter]);
-      
+      `,
+        [id as unknown as import("@sqlite").QueryParameter],
+      );
+
       result.push({
-        id: id as string, type: type as string, content: content as string, timestamp: timestamp as string,
+        id: id as string,
+        type: type as string,
+        content: content as string,
+        timestamp: timestamp as string,
         toolCalls: toolCalls.map(([tid, name, args, status, ttimestamp]) => ({
-          id: tid as string, name: name as string, args: JSON.parse(args as string), status: status as string, timestamp: ttimestamp as string
-        }))
+          id: tid as string,
+          name: name as string,
+          args: JSON.parse(args as string),
+          status: status as string,
+          timestamp: ttimestamp as string,
+        })),
       });
     }
-    
+
     return { sessionId, messages: result };
   }
 }

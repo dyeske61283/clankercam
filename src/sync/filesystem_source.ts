@@ -1,4 +1,4 @@
-import { join } from "https://deno.land/std/path/mod.ts";
+import { join } from "@std/path";
 import { SessionData } from "../types/session.ts";
 import { parseSessionFile } from "../parser/session_parser.ts";
 import { ProjectInfo, SessionSource } from "./source.ts";
@@ -26,7 +26,10 @@ export class FileSystemSessionSource implements SessionSource {
     }
 
     for await (const entry of Deno.readDir(chatsPath)) {
-      if (entry.isFile && (entry.name.endsWith(".jsonl") || entry.name.endsWith(".json"))) {
+      if (
+        entry.isFile &&
+        (entry.name.endsWith(".jsonl") || entry.name.endsWith(".json"))
+      ) {
         const filePath = join(chatsPath, entry.name);
         const session = await parseSessionFile(filePath);
         if (session) {

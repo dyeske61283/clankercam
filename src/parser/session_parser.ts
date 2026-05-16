@@ -2,13 +2,13 @@ import { Message, SessionMetadata } from "../types/session.ts";
 
 export async function parseSessionFile(filePath: string) {
   const content = await Deno.readTextFile(filePath);
-  
+
   if (filePath.endsWith(".jsonl")) {
     return parseJsonl(content, filePath);
   } else if (filePath.endsWith(".json")) {
     return parseJson(content, filePath);
   }
-  
+
   return null;
 }
 
@@ -45,10 +45,12 @@ function parseJson(content: string, filePath: string) {
     const data = JSON.parse(content);
     const { messages, ...metadata } = data;
     // Filter messages in JSON format too just in case
-    const filteredMessages = (messages || []).filter((m: any) => m.id && m.timestamp);
-    return { 
-      metadata: metadata as SessionMetadata, 
-      messages: filteredMessages as Message[] 
+    const filteredMessages = (messages || []).filter((
+      m: Record<string, unknown>,
+    ) => m.id && m.timestamp);
+    return {
+      metadata: metadata as SessionMetadata,
+      messages: filteredMessages as Message[],
     };
   } catch (e) {
     console.error(`Failed to parse JSON session in ${filePath}:`, e);
