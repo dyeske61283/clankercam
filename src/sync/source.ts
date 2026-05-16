@@ -4,7 +4,11 @@ export interface ProjectInfo {
   hash: string;
 }
 
-export interface SessionSource {
+export interface Source {
+  id: string;
+  name: string;
   listProjects(): AsyncIterable<ProjectInfo>;
   listSessions(projectHash: string): AsyncIterable<SessionData>;
 }
+
+export interface SessionSource extends Source {}

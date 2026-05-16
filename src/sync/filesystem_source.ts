@@ -4,6 +4,9 @@ import { parseSessionFile } from "../parser/session_parser.ts";
 import { ProjectInfo, SessionSource } from "./source.ts";
 
 export class FileSystemSessionSource implements SessionSource {
+  id = "filesystem";
+  name = "Local Filesystem";
+
   constructor(private geminiTmpDir: string) {}
 
   async *listProjects(): AsyncIterable<ProjectInfo> {

@@ -4,9 +4,13 @@ import { FileSystemSessionSource } from "./src/sync/filesystem_source.ts";
 import { createApi } from "./src/api/server.ts";
 import { join } from "@std/path";
 import { serveStatic } from "@hono/hono/deno";
+import { DiscoveryService } from "./src/discovery/discovery_service.ts";
+import { Registry } from "./src/discovery/registry.ts";
+import * as configLoader from "./src/config/loader.ts";
 
-const GEMINI_TMP_DIR = join(Deno.env.get("HOME") || "", ".gemini/tmp");
+const _GEMINI_TMP_DIR = join(Deno.env.get("HOME") || "", ".gemini/tmp");
 const DB_PATH = "clankercam.db";
+const CONFIG_PATH = "config.json";
 const PORT = 8000;
 
 async function main() {
@@ -14,10 +18,20 @@ async function main() {
   const command = args[0];
 
   if (command === "sync") {
-    console.log("Syncing sessions from", GEMINI_TMP_DIR);
+    console.log("Syncing sessions...");
     const db = initDb(DB_PATH);
-    const source = new FileSystemSessionSource(GEMINI_TMP_DIR);
-    await syncSessions(db, source);
+
+    const discoveryService = new DiscoveryService();
+    const registry = new Registry(discoveryService, configLoader, CONFIG_PATH);
+
+    const sourcePaths = await registry.getSources();
+
+    for (const path of sourcePaths) {
+      console.log(`Syncing source: ${path}`);
+      const source = new FileSystemSessionSource(path);
+      await syncSessions(db, source);
+    }
+
     db.close();
     console.log("Sync complete!");
   } else if (command === "serve") {

@@ -5,6 +5,8 @@ import { SessionData } from "../types/session.ts";
 import { ProjectInfo, SessionSource } from "./source.ts";
 
 class MockSessionSource implements SessionSource {
+  id = "mock";
+  name = "Mock Source";
   projects: ProjectInfo[] = [];
   sessions: Record<string, SessionData[]> = {};
 
