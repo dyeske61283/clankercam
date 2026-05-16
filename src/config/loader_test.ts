@@ -58,7 +58,10 @@ Deno.test("loadConfig throws helpful error on malformed JSON", async () => {
     throw new Error("Should have thrown");
   } catch (error) {
     assertEquals(error instanceof Error, true);
-    assertEquals((error as Error).message.includes("Failed to parse config"), true);
+    assertEquals(
+      (error as Error).message.includes("Failed to parse config"),
+      true,
+    );
   } finally {
     await Deno.remove(tempFile);
   }

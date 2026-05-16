@@ -15,7 +15,9 @@ export async function loadConfig(
       config = JSON.parse(configContent) as ClankerCamConfig;
     } catch (e) {
       if (e instanceof SyntaxError) {
-        throw new Error(`Failed to parse config at ${configPath}: ${e.message}`);
+        throw new Error(
+          `Failed to parse config at ${configPath}: ${e.message}`,
+        );
       }
       throw e;
     }
