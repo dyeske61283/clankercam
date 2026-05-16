@@ -50,7 +50,7 @@ Deno.test("syncSessions persists data from SessionSource to DB", async () => {
       },
     ];
 
-    await syncSessions(db, source);
+    await syncSessions(db, source, false);
 
     const projects = db.query("SELECT id FROM projects");
     assertEquals(projects, [["p1"]]);

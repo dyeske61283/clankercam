@@ -3,11 +3,11 @@ import { SessionSource } from "./source.ts";
 import { SQLiteSessionRepository } from "../db/repository.ts";
 import { Session } from "../domain/session.ts";
 
-export async function syncSessions(db: DB, source: SessionSource) {
+export async function syncSessions(db: DB, source: SessionSource, verbose: boolean = false) {
   const repository = new SQLiteSessionRepository(db);
 
   for await (const project of source.listProjects()) {
-    await syncProjectSessions(project.hash, source, repository);
+    await syncProjectSessions(project.hash, source, repository, verbose);
   }
 }
 
@@ -15,8 +15,9 @@ async function syncProjectSessions(
   projectHash: string,
   source: SessionSource,
   repository: SQLiteSessionRepository,
+  verbose: boolean,
 ) {
-  console.log(`Syncing project: ${projectHash}`);
+  if (verbose) console.log(`Syncing project: ${projectHash}`);
   repository.saveProject(projectHash);
 
   let sessionCount = 0;
@@ -34,12 +35,17 @@ async function syncProjectSessions(
           usage.total,
         );
       }
+      if (verbose) {
+        console.log(`  Processed session: ${sessionData.metadata.sessionId}`);
+      }
       sessionCount++;
     } catch (err) {
       console.error(`    Error processing session:`, err);
     }
   }
   if (sessionCount > 0) {
-    console.log(`Synced ${sessionCount} sessions for project ${projectHash}`);
+    if (verbose) {
+      console.log(`Synced ${sessionCount} sessions for project ${projectHash}`);
+    }
   }
 }

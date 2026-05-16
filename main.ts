@@ -18,6 +18,7 @@ async function main() {
   const command = args[0];
 
   if (command === "sync") {
+    const verbose = args.includes("--verbose") || args.includes("-v");
     console.log("Syncing sessions...");
     const db = initDb(DB_PATH);
 
@@ -27,9 +28,9 @@ async function main() {
     const sourcePaths = await registry.getSources();
 
     for (const path of sourcePaths) {
-      console.log(`Syncing source: ${path}`);
+      if (verbose) console.log(`Syncing source: ${path}`);
       const source = new FileSystemSessionSource(path);
-      await syncSessions(db, source);
+      await syncSessions(db, source, verbose);
     }
 
     db.close();
