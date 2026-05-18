@@ -12,7 +12,12 @@ Deno.test("FileSystemSessionSource.listProjects() lists directories in the root"
     // Create a non-directory file to ensure it's ignored
     await Deno.writeTextFile(join(tempDir, "not-a-project.txt"), "hello");
 
-    const source = new FileSystemSessionSource(tempDir);
+    const source = new FileSystemSessionSource(
+      "fs-test",
+      "Test FS",
+      "gemini",
+      tempDir,
+    );
     const projects = [];
     for await (const project of source.listProjects()) {
       projects.push(project.hash);
@@ -46,7 +51,12 @@ Deno.test("FileSystemSessionSource.listSessions() lists sessions in project/chat
       JSON.stringify(sessionData),
     );
 
-    const source = new FileSystemSessionSource(tempDir);
+    const source = new FileSystemSessionSource(
+      "fs-test",
+      "Test FS",
+      "gemini",
+      tempDir,
+    );
     const sessions = [];
     for await (const session of source.listSessions(projectHash)) {
       sessions.push(session);
@@ -54,6 +64,46 @@ Deno.test("FileSystemSessionSource.listSessions() lists sessions in project/chat
 
     assertEquals(sessions.length, 1);
     assertEquals(sessions[0].metadata.sessionId, "session1");
+  } finally {
+    await Deno.remove(tempDir, { recursive: true });
+  }
+});
+
+Deno.test("FileSystemSessionSource.listSessions() handles custom subdirectory", async () => {
+  const tempDir = await Deno.makeTempDir();
+  try {
+    const projectHash = "project2";
+    const customPath = join(tempDir, projectHash, "history");
+    await Deno.mkdir(customPath, { recursive: true });
+
+    const sessionData = {
+      sessionId: "session2",
+      projectHash,
+      startTime: new Date().toISOString(),
+      lastUpdated: new Date().toISOString(),
+      kind: "chat",
+      messages: [],
+    };
+
+    await Deno.writeTextFile(
+      join(customPath, "session2.json"),
+      JSON.stringify(sessionData),
+    );
+
+    const source = new FileSystemSessionSource(
+      "fs-custom",
+      "Custom FS",
+      "claudecode",
+      tempDir,
+      "history",
+    );
+    const sessions = [];
+    for await (const session of source.listSessions(projectHash)) {
+      sessions.push(session);
+    }
+
+    assertEquals(sessions.length, 1);
+    assertEquals(sessions[0].metadata.sessionId, "session2");
   } finally {
     await Deno.remove(tempDir, { recursive: true });
   }

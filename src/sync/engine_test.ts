@@ -2,12 +2,13 @@ import { assertEquals } from "@std/assert";
 import { initDb } from "../db/schema.ts";
 import { syncSessions } from "./engine.ts";
 import { SessionData } from "../types/session.ts";
-import { ProjectInfo, SessionSource } from "./source.ts";
+import { AgentType, ProjectInfo, SessionSource } from "./source.ts";
 import { SyncLogger } from "./logger.ts";
 
 class MockSessionSource implements SessionSource {
   id = "mock";
   name = "Mock Source";
+  agentType: AgentType = "gemini";
   projects: ProjectInfo[] = [];
   sessions: Record<string, SessionData[]> = {};
 

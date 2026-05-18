@@ -31,7 +31,12 @@ async function main() {
 
     for (const path of sourcePaths) {
       logger.info(`Syncing source: ${path}`);
-      const source = new FileSystemSessionSource(path);
+      const source = new FileSystemSessionSource(
+        path,
+        `Source at ${path}`,
+        "gemini",
+        path,
+      );
       await syncSessions(db, source, logger);
     }
 

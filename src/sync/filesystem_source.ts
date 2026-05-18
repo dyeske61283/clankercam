@@ -1,16 +1,19 @@
 import { join } from "@std/path";
 import { SessionData } from "../types/session.ts";
 import { parseSessionFile } from "../parser/session_parser.ts";
-import { ProjectInfo, SessionSource } from "./source.ts";
+import { AgentType, ProjectInfo, SessionSource } from "./source.ts";
 
 export class FileSystemSessionSource implements SessionSource {
-  id = "filesystem";
-  name = "Local Filesystem";
-
-  constructor(private geminiTmpDir: string) {}
+  constructor(
+    public readonly id: string,
+    public readonly name: string,
+    public readonly agentType: AgentType,
+    private readonly rootDir: string,
+    private readonly sessionSubdir: string = "chats",
+  ) {}
 
   async *listProjects(): AsyncIterable<ProjectInfo> {
-    for await (const entry of Deno.readDir(this.geminiTmpDir)) {
+    for await (const entry of Deno.readDir(this.rootDir)) {
       if (entry.isDirectory) {
         yield { hash: entry.name };
       }
@@ -18,8 +21,8 @@ export class FileSystemSessionSource implements SessionSource {
   }
 
   async *listSessions(projectHash: string): AsyncIterable<SessionData> {
-    const projectPath = join(this.geminiTmpDir, projectHash);
-    const chatsPath = join(projectPath, "chats");
+    const projectPath = join(this.rootDir, projectHash);
+    const chatsPath = join(projectPath, this.sessionSubdir);
 
     try {
       const stats = await Deno.stat(chatsPath);
