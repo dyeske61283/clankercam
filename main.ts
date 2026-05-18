@@ -7,6 +7,7 @@ import { serveStatic } from "@hono/hono/deno";
 import { DiscoveryService } from "./src/discovery/discovery_service.ts";
 import { Registry } from "./src/discovery/registry.ts";
 import * as configLoader from "./src/config/loader.ts";
+import { ConsoleSyncLogger } from "./src/sync/logger.ts";
 
 const _GEMINI_TMP_DIR = join(Deno.env.get("HOME") || "", ".gemini/tmp");
 const DB_PATH = "clankercam.db";
@@ -19,6 +20,7 @@ async function main() {
 
   if (command === "sync") {
     const verbose = args.includes("--verbose") || args.includes("-v");
+    const logger = new ConsoleSyncLogger(verbose);
     console.log("Syncing sessions...");
     const db = initDb(DB_PATH);
 
@@ -28,9 +30,9 @@ async function main() {
     const sourcePaths = await registry.getSources();
 
     for (const path of sourcePaths) {
-      if (verbose) console.log(`Syncing source: ${path}`);
+      logger.info(`Syncing source: ${path}`);
       const source = new FileSystemSessionSource(path);
-      await syncSessions(db, source, verbose);
+      await syncSessions(db, source, logger);
     }
 
     db.close();

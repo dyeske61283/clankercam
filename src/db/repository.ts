@@ -44,7 +44,7 @@ export class SQLiteSessionRepository implements SessionRepository {
     const { metadata, messages } = session;
 
     this.db.query(
-      "INSERT OR REPLACE INTO sessions (id, project_id, start_time, last_updated, kind) VALUES (?, ?, ?, ?, ?)",
+      "INSERT INTO sessions (id, project_id, start_time, last_updated, kind) VALUES (?, ?, ?, ?, ?)",
       [
         metadata.sessionId,
         projectHash,
@@ -56,7 +56,7 @@ export class SQLiteSessionRepository implements SessionRepository {
 
     for (const msg of messages) {
       this.db.query(
-        "INSERT OR REPLACE INTO messages (id, session_id, type, content, timestamp) VALUES (?, ?, ?, ?, ?)",
+        "INSERT INTO messages (id, session_id, type, content, timestamp) VALUES (?, ?, ?, ?, ?)",
         [
           msg.id,
           metadata.sessionId,
@@ -71,7 +71,7 @@ export class SQLiteSessionRepository implements SessionRepository {
       if (msg.toolCalls) {
         for (const tc of msg.toolCalls) {
           this.db.query(
-            "INSERT OR REPLACE INTO tool_calls (id, message_id, name, args, status, timestamp) VALUES (?, ?, ?, ?, ?, ?)",
+            "INSERT INTO tool_calls (id, message_id, name, args, status, timestamp) VALUES (?, ?, ?, ?, ?, ?)",
             [
               tc.id,
               msg.id,
@@ -93,7 +93,7 @@ export class SQLiteSessionRepository implements SessionRepository {
     totalTokens: number,
   ): void {
     this.db.query(
-      "INSERT OR REPLACE INTO token_usage (session_id, input_tokens, output_tokens, total_tokens) VALUES (?, ?, ?, ?)",
+      "INSERT INTO token_usage (session_id, input_tokens, output_tokens, total_tokens) VALUES (?, ?, ?, ?)",
       [sessionId, inputTokens, outputTokens, totalTokens],
     );
   }

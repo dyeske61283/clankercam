@@ -2,16 +2,17 @@ import { DB } from "@sqlite";
 import { SessionSource } from "./source.ts";
 import { SQLiteSessionRepository } from "../db/repository.ts";
 import { Session } from "../domain/session.ts";
+import { NoopSyncLogger, SyncLogger } from "./logger.ts";
 
 export async function syncSessions(
   db: DB,
   source: SessionSource,
-  verbose: boolean = false,
+  logger: SyncLogger = new NoopSyncLogger(),
 ) {
   const repository = new SQLiteSessionRepository(db);
 
   for await (const project of source.listProjects()) {
-    await syncProjectSessions(project.hash, source, repository, verbose);
+    await syncProjectSessions(project.hash, source, repository, logger);
   }
 }
 
@@ -19,9 +20,9 @@ async function syncProjectSessions(
   projectHash: string,
   source: SessionSource,
   repository: SQLiteSessionRepository,
-  verbose: boolean,
+  logger: SyncLogger,
 ) {
-  if (verbose) console.log(`Syncing project: ${projectHash}`);
+  logger.info(`Syncing project: ${projectHash}`);
   repository.saveProject(projectHash);
 
   let sessionCount = 0;
@@ -44,34 +45,28 @@ async function syncProjectSessions(
             err instanceof Error &&
             err.message.includes("UNIQUE constraint failed")
           ) {
-            if (verbose) {
-              console.warn(
-                `    Skipping duplicate token usage: ${sessionData.metadata.sessionId}`,
-              );
-            }
+            logger.warn(
+              `    Skipping duplicate token usage: ${sessionData.metadata.sessionId}`,
+            );
           } else {
-            console.error(
+            logger.error(
               `    Error processing token usage for ${sessionData.metadata.sessionId}:`,
               err,
             );
           }
         }
       }
-      if (verbose) {
-        console.log(`  Processed session: ${sessionData.metadata.sessionId}`);
-      }
+      logger.info(`  Processed session: ${sessionData.metadata.sessionId}`);
       sessionCount++;
     } catch (err: unknown) {
       if (
         err instanceof Error && err.message.includes("UNIQUE constraint failed")
       ) {
-        if (verbose) {
-          console.warn(
-            `    Skipping duplicate session: ${sessionData.metadata.sessionId}`,
-          );
-        }
+        logger.warn(
+          `    Skipping duplicate session: ${sessionData.metadata.sessionId}`,
+        );
       } else {
-        console.error(
+        logger.error(
           `    Error processing session ${sessionData.metadata.sessionId}:`,
           err,
         );
@@ -79,8 +74,6 @@ async function syncProjectSessions(
     }
   }
   if (sessionCount > 0) {
-    if (verbose) {
-      console.log(`Synced ${sessionCount} sessions for project ${projectHash}`);
-    }
+    logger.info(`Synced ${sessionCount} sessions for project ${projectHash}`);
   }
 }
