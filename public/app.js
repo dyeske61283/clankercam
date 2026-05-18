@@ -41,7 +41,7 @@ async function renderProjects() {
   list.innerHTML = projects.map((p) => `
         <div class="card" onclick="_showSessions('${p.id}', '${p.path}')">
             <h3>${p.path === "unknown" ? p.id : p.path}</h3>
-            <p>${p.session_count} Sessions</p>
+            <p>${p.sessionCount} Sessions</p>
         </div>
     `).join("");
 }
@@ -65,7 +65,7 @@ async function _showSessions(projectId, path) {
                 <span class="badge">${s.kind}</span>
             </div>
             <div>
-                ${s.message_count} messages, ${s.tool_call_count} tools
+                ${s.messageCount} messages, ${s.toolCallCount} tools
             </div>
         </div>
     `).join("");
@@ -111,6 +111,7 @@ function formatTokens(n) {
 }
 
 function formatContent(content) {
+  if (content === null || content === undefined) return "";
   if (typeof content !== "string") return JSON.stringify(content);
   return content.replace(/\n/g, "<br>");
 }
