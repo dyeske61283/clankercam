@@ -11,9 +11,9 @@ Deno.test("CodexParser parses valid jsonl file", async () => {
   await Deno.writeTextFile("test.jsonl", testLog);
   try {
     const result = await parser.parse("test.jsonl");
-    assertEquals(result?.metadata.sessionId, "test-id");
-    assertEquals(result?.messages.length, 1);
-    assertEquals(result?.messages[0].content, "hello");
+    assertEquals(result?.data.metadata.sessionId, "test-id");
+    assertEquals(result?.data.messages.length, 1);
+    assertEquals(result?.data.messages[0].content, "hello");
   } finally {
     await Deno.remove("test.jsonl");
   }

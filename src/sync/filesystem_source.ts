@@ -1,5 +1,5 @@
 import { join } from "@std/path";
-import { SessionData } from "../types/session.ts";
+import { Session } from "../domain/session.ts";
 import { Parser } from "../parser/parser.ts";
 import { AgentType, ProjectInfo, SessionSource } from "./source.ts";
 
@@ -21,7 +21,7 @@ export class FileSystemSessionSource implements SessionSource {
     }
   }
 
-  async *listSessions(projectHash: string): AsyncIterable<SessionData> {
+  async *listSessions(projectHash: string): AsyncIterable<Session> {
     const projectPath = join(this.rootDir, projectHash);
     const chatsPath = join(projectPath, this.sessionSubdir);
 

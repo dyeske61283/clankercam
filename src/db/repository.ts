@@ -1,5 +1,5 @@
 import { DB } from "@sqlite";
-import { SessionData } from "../types/session.ts";
+import { Message, SessionData, TokenUsage } from "../types/session.ts";
 
 export interface SessionRepository {
   saveSession(projectHash: string, session: SessionData): void;
@@ -29,7 +29,12 @@ export interface SessionRepository {
     messageCount: number;
     toolCallCount: number;
   }[];
-  getSession(sessionId: string): { sessionId: string; messages: unknown[] };
+  getSession(sessionId: string): {
+    sessionId: string;
+    metadata: Record<string, unknown>;
+    messages: Message[];
+    tokenUsage?: TokenUsage;
+  };
 }
 
 export class SQLiteSessionRepository implements SessionRepository {
@@ -43,49 +48,72 @@ export class SQLiteSessionRepository implements SessionRepository {
   }
 
   saveSession(projectHash: string, session: SessionData): void {
-    const { metadata, messages } = session;
+    this.withTransaction(() => {
+      const { metadata, messages } = session;
 
-    this.db.query(
-      "INSERT INTO sessions (id, project_id, start_time, last_updated, kind, metadata) VALUES (?, ?, ?, ?, ?, ?)",
-      [
-        metadata.sessionId,
-        projectHash,
-        metadata.startTime,
-        metadata.lastUpdated,
-        metadata.kind,
-        JSON.stringify({ tags: metadata.tags, comment: metadata.comment }),
-      ],
-    );
-
-    for (const msg of messages) {
       this.db.query(
-        "INSERT INTO messages (id, session_id, type, content, timestamp) VALUES (?, ?, ?, ?, ?)",
+        "INSERT INTO sessions (id, project_id, start_time, last_updated, kind, metadata) VALUES (?, ?, ?, ?, ?, ?)",
         [
-          msg.id,
           metadata.sessionId,
-          msg.type,
-          typeof msg.content === "string"
-            ? msg.content
-            : JSON.stringify(msg.content),
-          msg.timestamp,
+          projectHash,
+          metadata.startTime,
+          metadata.lastUpdated,
+          metadata.kind,
+          JSON.stringify({ tags: metadata.tags, comment: metadata.comment }),
         ],
       );
 
-      if (msg.toolCalls) {
-        for (const tc of msg.toolCalls) {
-          this.db.query(
-            "INSERT INTO tool_calls (id, message_id, name, args, status, timestamp) VALUES (?, ?, ?, ?, ?, ?)",
-            [
-              tc.id,
-              msg.id,
-              tc.name,
-              JSON.stringify(tc.args),
-              tc.status || "unknown",
-              tc.timestamp || msg.timestamp,
-            ],
-          );
+      for (const msg of messages) {
+        this.db.query(
+          "INSERT INTO messages (id, session_id, type, content, timestamp) VALUES (?, ?, ?, ?, ?)",
+          [
+            msg.id,
+            metadata.sessionId,
+            msg.type,
+            typeof msg.content === "string"
+              ? msg.content
+              : JSON.stringify(msg.content),
+            msg.timestamp,
+          ],
+        );
+
+        if (msg.toolCalls) {
+          for (const tc of msg.toolCalls) {
+            this.db.query(
+              "INSERT INTO tool_calls (id, message_id, name, args, status, timestamp) VALUES (?, ?, ?, ?, ?, ?)",
+              [
+                tc.id,
+                msg.id,
+                tc.name,
+                JSON.stringify(tc.args),
+                tc.status || "unknown",
+                tc.timestamp || msg.timestamp,
+              ],
+            );
+          }
         }
       }
+    });
+  }
+
+  private inTransaction = false;
+
+  withTransaction<T>(fn: () => T): T {
+    if (this.inTransaction) {
+      return fn();
+    }
+
+    this.inTransaction = true;
+    this.db.query("BEGIN TRANSACTION");
+    try {
+      const result = fn();
+      this.db.query("COMMIT");
+      return result;
+    } catch (e) {
+      this.db.query("ROLLBACK");
+      throw e;
+    } finally {
+      this.inTransaction = false;
     }
   }
 
@@ -207,7 +235,7 @@ export class SQLiteSessionRepository implements SessionRepository {
 
       result.push({
         id: id as string,
-        type: type as string,
+        type: type as Message["type"],
         content: content as string,
         timestamp: timestamp as string,
         toolCalls: toolCalls.map(([tid, name, args, status, ttimestamp]) => ({

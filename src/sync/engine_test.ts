@@ -5,6 +5,7 @@ import { SessionData } from "../types/session.ts";
 import { AgentType, ProjectInfo, SessionSource } from "./source.ts";
 import { NoopSyncLogger, SyncLogger } from "./logger.ts";
 import { SQLiteSessionRepository } from "../db/repository.ts";
+import { Session } from "../domain/session.ts";
 
 class MockSessionSource implements SessionSource {
   id = "mock";
@@ -19,10 +20,10 @@ class MockSessionSource implements SessionSource {
     }
   }
 
-  async *listSessions(projectHash: string): AsyncIterable<SessionData> {
+  async *listSessions(projectHash: string): AsyncIterable<Session> {
     const projectSessions = this.sessions[projectHash] || [];
-    for (const session of projectSessions) {
-      yield session;
+    for (const sessionData of projectSessions) {
+      yield new Session(sessionData);
     }
   }
 }

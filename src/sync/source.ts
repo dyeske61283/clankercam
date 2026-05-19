@@ -1,4 +1,4 @@
-import { SessionData } from "../types/session.ts";
+import { Session } from "../domain/session.ts";
 
 export type AgentType =
   | "gemini"
@@ -16,7 +16,7 @@ export interface Source {
   name: string;
   agentType: AgentType;
   listProjects(): AsyncIterable<ProjectInfo>;
-  listSessions(projectHash: string): AsyncIterable<SessionData>;
+  listSessions(projectHash: string): AsyncIterable<Session>;
 }
 
 export interface SessionSource extends Source {}

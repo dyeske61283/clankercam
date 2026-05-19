@@ -11,10 +11,10 @@ Deno.test("OpenCodeParser should parse the example log file", async () => {
     throw new Error("Result is null");
   }
 
-  assertEquals(result.metadata.kind, "opencode");
-  assertEquals(result.messages.length > 0, true);
-  assertEquals(result.messages[0].type, "gemini");
+  assertEquals(result.data.metadata.kind, "opencode");
+  assertEquals(result.data.messages.length > 0, true);
+  assertEquals(result.data.messages[0].type, "gemini");
   // Check that the content is parsed correctly from the JSONL
-  assertEquals(typeof result.messages[0].content, "string");
-  assertEquals(result.messages[0].content.length > 0, true);
+  assertEquals(typeof result.data.messages[0].content, "string");
+  assertEquals(result.data.messages[0].content.length > 0, true);
 });

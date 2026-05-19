@@ -1,5 +1,6 @@
 import { Parser } from "./parser.ts";
-import { SessionData } from "../types/session.ts";
+import { Session } from "../domain/session.ts";
+import { normalizeSession } from "../domain/normalization.ts";
 
 /**
  * GenericParser handles unknown or non-standard agent session formats.
@@ -7,7 +8,7 @@ import { SessionData } from "../types/session.ts";
  * from standard JSON/JSONL structures.
  */
 export class GenericParser implements Parser {
-  async parse(filePath: string): Promise<SessionData | null> {
+  async parse(filePath: string): Promise<Session | null> {
     const content = await Deno.readTextFile(filePath);
 
     // Attempt basic JSONL parsing first
@@ -19,7 +20,7 @@ export class GenericParser implements Parser {
     return this.parseGenericJson(content);
   }
 
-  private parseGenericJsonl(content: string): SessionData | null {
+  private parseGenericJsonl(content: string): Session | null {
     const lines = content.trim().split("\n");
     if (lines.length === 0) return null;
 
@@ -31,33 +32,20 @@ export class GenericParser implements Parser {
           return null;
         }
       })
-      .filter((obj) => obj && obj.id && obj.timestamp);
+      .filter((obj) => obj && (obj.id || obj.timestamp));
 
-    return {
+    return normalizeSession({
       metadata: {
-        sessionId: crypto.randomUUID(),
-        projectHash: "unknown",
-        startTime: messages[0]?.timestamp || "",
-        lastUpdated: messages[messages.length - 1]?.timestamp || "",
         kind: "generic",
       },
       messages,
-    };
+    });
   }
 
-  private parseGenericJson(content: string): SessionData | null {
+  private parseGenericJson(content: string): Session | null {
     try {
       const data = JSON.parse(content);
-      return {
-        metadata: {
-          sessionId: data.sessionId || crypto.randomUUID(),
-          projectHash: data.projectHash || "unknown",
-          startTime: data.startTime || "",
-          lastUpdated: data.lastUpdated || "",
-          kind: "generic",
-        },
-        messages: data.messages || [],
-      };
+      return normalizeSession(data);
     } catch {
       return null;
     }

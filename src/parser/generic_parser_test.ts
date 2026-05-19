@@ -13,9 +13,9 @@ Deno.test("GenericParser parses JSONL correctly", async () => {
 
   try {
     const result = await parser.parse(filePath);
-    assertEquals(result?.messages.length, 2);
-    assertEquals(result?.messages[0].id, "msg1");
-    assertEquals(result?.metadata.kind, "generic");
+    assertEquals(result?.data.messages.length, 2);
+    assertEquals(result?.data.messages[0].id, "msg1");
+    assertEquals(result?.data.metadata.kind, "generic");
   } finally {
     await Deno.remove(filePath);
   }

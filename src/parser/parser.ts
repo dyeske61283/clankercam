@@ -1,5 +1,5 @@
-import { SessionData } from "../types/session.ts";
+import { Session } from "../domain/session.ts";
 
 export interface Parser {
-  parse(filePath: string): Promise<SessionData | null>;
+  parse(filePath: string): Promise<Session | null>;
 }

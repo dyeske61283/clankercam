@@ -12,6 +12,6 @@ Deno.test("ClaudeCodeParser parses example log correctly", async () => {
   }
 
   // Basic assertions
-  assertEquals(result.metadata.sessionId, "test_session");
-  assertEquals(result.messages.length > 0, true);
+  assertEquals(result.data.metadata.sessionId, "test_session");
+  assertEquals(result.data.messages.length > 0, true);
 });

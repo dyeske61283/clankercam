@@ -1,7 +1,7 @@
 import { DB } from "@sqlite";
 import { SessionSource } from "./source.ts";
 import { SQLiteSessionRepository } from "../db/repository.ts";
-import { Session } from "../domain/session.ts";
+// import { Session } from "../domain/session.ts";
 import { NoopSyncLogger, SyncLogger } from "./logger.ts";
 
 export async function syncSessions(
@@ -30,35 +30,14 @@ export async function syncProjectSessions(
   repository.saveProject(projectHash);
 
   let sessionCount = 0;
-  for await (const sessionData of source.listSessions(projectHash)) {
+  for await (const session of source.listSessions(projectHash)) {
+    const sessionData = session.data;
     try {
-      if (!sessionData.metadata.startTime && sessionData.messages.length > 0) {
-        const timestamps = sessionData.messages.map((m) =>
-          new Date(m.timestamp).getTime()
-        );
-        const oldest = new Date(Math.min(...timestamps)).toISOString();
-        const newest = new Date(Math.max(...timestamps)).toISOString();
-        sessionData.metadata.startTime = oldest;
-        sessionData.metadata.lastUpdated = newest;
-        logger.warn(
-          `    Inferred startTime/lastUpdated for session ${sessionData.metadata.sessionId}: ${oldest}/${newest}`,
-        );
-      }
+      repository.withTransaction(() => {
+        repository.saveSession(projectHash, sessionData);
 
-      if (
-        !sessionData.metadata.startTime || !sessionData.metadata.lastUpdated
-      ) {
-        logger.warn(
-          `    Skipping session ${sessionData.metadata.sessionId}: Missing startTime or lastUpdated`,
-        );
-        continue;
-      }
-      repository.saveSession(projectHash, sessionData);
-
-      const session = new Session(sessionData);
-      const usage = session.tokenUsage;
-      if (usage.total > 0) {
-        try {
+        const usage = session.tokenUsage;
+        if (usage.total > 0) {
           repository.saveTokenUsage(
             sessionData.metadata.sessionId,
             usage.input,
@@ -66,22 +45,9 @@ export async function syncProjectSessions(
             usage.total,
             usage.cache ?? 0,
           );
-        } catch (err: unknown) {
-          if (
-            err instanceof Error &&
-            err.message.includes("UNIQUE constraint failed")
-          ) {
-            logger.warn(
-              `    Skipping duplicate token usage: ${sessionData.metadata.sessionId}`,
-            );
-          } else {
-            logger.error(
-              `    Error processing token usage for ${sessionData.metadata.sessionId}:`,
-              err,
-            );
-          }
         }
-      }
+      });
+
       logger.info(
         `Session ${sessionData.metadata.sessionId} tokens: ${
           JSON.stringify(session.tokenUsage)

@@ -66,3 +66,32 @@ Deno.test("loadConfig throws helpful error on malformed JSON", async () => {
     await Deno.remove(tempFile);
   }
 });
+
+Deno.test("loadConfig reads probes correctly", async () => {
+  const tempFile = await Deno.makeTempFile({ suffix: ".json" });
+  const configData = {
+    sources: [],
+    probes: [
+      {
+        id: "p1",
+        type: "path" as const,
+        path: "/p1",
+        agentType: "gemini" as const,
+      },
+      {
+        id: "p2",
+        type: "pattern" as const,
+        path: "/*/p2",
+        agentType: "claudecode" as const,
+      },
+    ],
+  };
+  await Deno.writeTextFile(tempFile, JSON.stringify(configData));
+
+  try {
+    const config = await loadConfig(tempFile);
+    assertEquals(config.probes, configData.probes);
+  } finally {
+    await Deno.remove(tempFile);
+  }
+});

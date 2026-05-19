@@ -66,7 +66,7 @@ Deno.test("FileSystemSessionSource.listSessions() lists sessions in project/chat
     }
 
     assertEquals(sessions.length, 1);
-    assertEquals(sessions[0].metadata.sessionId, "session1");
+    assertEquals(sessions[0].data.metadata.sessionId, "session1");
   } finally {
     await Deno.remove(tempDir, { recursive: true });
   }
@@ -107,7 +107,7 @@ Deno.test("FileSystemSessionSource.listSessions() handles custom subdirectory", 
     }
 
     assertEquals(sessions.length, 1);
-    assertEquals(sessions[0].metadata.sessionId, "session2");
+    assertEquals(sessions[0].data.metadata.sessionId, "session2");
   } finally {
     await Deno.remove(tempDir, { recursive: true });
   }

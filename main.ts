@@ -10,9 +10,12 @@ import { Registry } from "./src/discovery/registry.ts";
 import * as configLoader from "./src/config/loader.ts";
 import { ConsoleSyncLogger } from "./src/sync/logger.ts";
 import { ParserRegistry } from "./src/parser/registry.ts";
+import { SQLiteSessionRepository } from "./src/db/repository.ts";
+import { exportSessions } from "./src/cli/export_cmd.ts";
+import { importSessions } from "./src/cli/import_cmd.ts";
 
 const _GEMINI_TMP_DIR = join(Deno.env.get("HOME") || "", ".gemini/tmp");
-const DB_PATH = "clankercam.db";
+const DB_PATH = Deno.env.get("DB_PATH") || "clankercam.db";
 const CONFIG_PATH = "config.json";
 const PORT = 8000;
 
@@ -80,6 +83,56 @@ async function main() {
 
     console.log(`ClankerCam server running at http://localhost:${PORT}`);
     Deno.serve({ port: PORT }, api.fetch);
+  } else if (command === "export") {
+    const projectId = args[1];
+    const outputPath = args[2] || "export.json";
+
+    if (!projectId) {
+      console.error("Error: Project ID is required.");
+      console.error(
+        "Usage: deno run --allow-read --allow-write main.ts export <projectId> [outputPath]",
+      );
+      Deno.exit(1);
+    }
+
+    const db = initDb(DB_PATH);
+    const repo = new SQLiteSessionRepository(db);
+
+    console.log(
+      `Exporting sessions for project '${projectId}' to '${outputPath}'...`,
+    );
+    try {
+      await exportSessions(repo, projectId, outputPath);
+      console.log("Export complete!");
+    } catch (e) {
+      console.error(`Error: ${e.message}`);
+      Deno.exit(1);
+    } finally {
+      db.close();
+    }
+  } else if (command === "import") {
+    const filePath = args[1];
+    if (!filePath) {
+      console.error("Error: Missing file path for import.");
+      console.error(
+        "Usage: deno run --allow-read --allow-write main.ts import <file_path>",
+      );
+      Deno.exit(1);
+    }
+
+    const db = initDb(DB_PATH);
+    const repository = new SQLiteSessionRepository(db);
+
+    console.log(`Importing sessions from ${filePath}...`);
+    try {
+      await importSessions(filePath, repository);
+      console.log("Import complete!");
+    } catch (e) {
+      console.error(`Error: ${e.message}`);
+      Deno.exit(1);
+    } finally {
+      db.close();
+    }
   } else {
     console.log("ClankerCam - Gemini CLI Analytics");
     console.log("Usage:");
@@ -94,6 +147,12 @@ async function main() {
     console.log("  --verbose, -v   Enable verbose logging");
     console.log(
       "  deno run --allow-read --allow-write --allow-env --allow-net main.ts serve",
+    );
+    console.log(
+      "  deno run --allow-read --allow-write --allow-env --allow-net main.ts export <projectId> [outputPath]",
+    );
+    console.log(
+      "  deno run --allow-read --allow-write --allow-env --allow-net main.ts import <file_path>",
     );
   }
 }
