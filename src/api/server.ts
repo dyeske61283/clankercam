@@ -31,5 +31,12 @@ export function createApi(db: DB) {
     return c.json(repository.getSession(sessionId));
   });
 
+  app.patch("/api/sessions/:id/metadata", async (c) => {
+    const sessionId = c.req.param("id");
+    const body = await c.req.json();
+    repository.updateSessionMetadata(sessionId, body);
+    return c.json({ status: "ok" });
+  });
+
   return app;
 }

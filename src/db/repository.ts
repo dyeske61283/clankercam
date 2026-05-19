@@ -44,13 +44,14 @@ export class SQLiteSessionRepository implements SessionRepository {
     const { metadata, messages } = session;
 
     this.db.query(
-      "INSERT INTO sessions (id, project_id, start_time, last_updated, kind) VALUES (?, ?, ?, ?, ?)",
+      "INSERT INTO sessions (id, project_id, start_time, last_updated, kind, metadata) VALUES (?, ?, ?, ?, ?, ?)",
       [
         metadata.sessionId,
         projectHash,
         metadata.startTime,
         metadata.lastUpdated,
         metadata.kind,
+        JSON.stringify({ tags: metadata.tags, comment: metadata.comment }),
       ],
     );
 
@@ -164,6 +165,13 @@ export class SQLiteSessionRepository implements SessionRepository {
   }
 
   getSession(sessionId: string) {
+    const session = this.db.query(
+      `SELECT metadata FROM sessions WHERE id = ?`,
+      [sessionId],
+    )[0];
+
+    const metadata = session ? JSON.parse(session[0] as string) : {};
+
     const messages = this.db.query(
       `
       SELECT id, type, content, timestamp
@@ -200,6 +208,18 @@ export class SQLiteSessionRepository implements SessionRepository {
       });
     }
 
-    return { sessionId, messages: result };
+    return { sessionId, metadata, messages: result };
+  }
+
+  updateSessionMetadata(
+    sessionId: string,
+    metadata: { tags?: string[]; comment?: string },
+  ): void {
+    const existing = this.getSession(sessionId);
+    const updatedMetadata = { ...existing.metadata, ...metadata };
+    this.db.query(
+      `UPDATE sessions SET metadata = ? WHERE id = ?`,
+      [JSON.stringify(updatedMetadata), sessionId],
+    );
   }
 }

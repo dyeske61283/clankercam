@@ -4,6 +4,8 @@ export interface SessionMetadata {
   startTime: string;
   lastUpdated: string;
   kind: string;
+  tags?: string[];
+  comment?: string;
 }
 
 export interface ToolCall {
@@ -19,6 +21,7 @@ export interface TokenUsage {
   input: number;
   output: number;
   total: number;
+  cache?: number;
 }
 
 export interface Message {

@@ -12,7 +12,11 @@ export class Session {
       (sum, msg) => sum + (msg.tokenUsage?.output ?? 0),
       0,
     );
-    return { input, output, total: input + output };
+    const cache = this.data.messages.reduce(
+      (sum, msg) => sum + (msg.tokenUsage?.cache ?? 0),
+      0,
+    );
+    return { input, output, total: input + output + cache, cache };
   }
 
   get inputTokens(): number {

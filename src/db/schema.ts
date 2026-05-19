@@ -17,6 +17,7 @@ export function initDb(path: string) {
       start_time TEXT NOT NULL,
       last_updated TEXT NOT NULL,
       kind TEXT,
+      metadata TEXT,
       FOREIGN KEY(project_id) REFERENCES projects(id)
     )
   `);
@@ -51,6 +52,16 @@ export function initDb(path: string) {
       output_tokens INTEGER DEFAULT 0,
       total_tokens INTEGER DEFAULT 0,
       FOREIGN KEY(session_id) REFERENCES sessions(id)
+    )
+  `);
+
+  db.execute(`
+    CREATE TABLE IF NOT EXISTS message_token_usage (
+      message_id TEXT PRIMARY KEY,
+      input_tokens INTEGER DEFAULT 0,
+      output_tokens INTEGER DEFAULT 0,
+      total_tokens INTEGER DEFAULT 0,
+      FOREIGN KEY(message_id) REFERENCES messages(id)
     )
   `);
 
