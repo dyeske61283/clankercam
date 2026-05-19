@@ -20,7 +20,7 @@ export async function syncSessions(
   }
 }
 
-async function syncProjectSessions(
+export async function syncProjectSessions(
   projectHash: string,
   source: SessionSource,
   repository: SQLiteSessionRepository,
@@ -32,6 +32,27 @@ async function syncProjectSessions(
   let sessionCount = 0;
   for await (const sessionData of source.listSessions(projectHash)) {
     try {
+      if (!sessionData.metadata.startTime && sessionData.messages.length > 0) {
+        const timestamps = sessionData.messages.map((m) =>
+          new Date(m.timestamp).getTime()
+        );
+        const oldest = new Date(Math.min(...timestamps)).toISOString();
+        const newest = new Date(Math.max(...timestamps)).toISOString();
+        sessionData.metadata.startTime = oldest;
+        sessionData.metadata.lastUpdated = newest;
+        logger.warn(
+          `    Inferred startTime/lastUpdated for session ${sessionData.metadata.sessionId}: ${oldest}/${newest}`,
+        );
+      }
+
+      if (
+        !sessionData.metadata.startTime || !sessionData.metadata.lastUpdated
+      ) {
+        logger.warn(
+          `    Skipping session ${sessionData.metadata.sessionId}: Missing startTime or lastUpdated`,
+        );
+        continue;
+      }
       repository.saveSession(projectHash, sessionData);
 
       const session = new Session(sessionData);
@@ -43,6 +64,7 @@ async function syncProjectSessions(
             usage.input,
             usage.output,
             usage.total,
+            usage.cache ?? 0,
           );
         } catch (err: unknown) {
           if (
@@ -60,7 +82,11 @@ async function syncProjectSessions(
           }
         }
       }
-      logger.info(`  Processed session: ${sessionData.metadata.sessionId}`);
+      logger.info(
+        `Session ${sessionData.metadata.sessionId} tokens: ${
+          JSON.stringify(session.tokenUsage)
+        }`,
+      );
       sessionCount++;
     } catch (err: unknown) {
       if (

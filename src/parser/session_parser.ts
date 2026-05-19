@@ -30,9 +30,32 @@ export class GeminiParser implements Parser {
     for (let i = 1; i < lines.length; i++) {
       try {
         const obj = JSON.parse(lines[i]);
-        // Skip internal update lines like {"$set": ...} or metadata-only lines
-        if (obj.id && obj.timestamp) {
-          messages.push(obj as Message);
+        if (obj.message && obj.message.id) {
+          const msg: Message = {
+            id: obj.message.id,
+            timestamp: obj.timestamp,
+            type: obj.message.role === "assistant" ? "gemini" : "user",
+            content: JSON.stringify(obj.message.content),
+            tokenUsage: (console.log(
+                "DEBUG: message id",
+                obj.message.id,
+                "usage:",
+                obj.message.usage,
+              ),
+                obj.message.usage)
+              ? {
+                input: obj.message.usage.input_tokens || 0,
+                output: obj.message.usage.output_tokens || 0,
+                total: (obj.message.usage.input_tokens || 0) +
+                  (obj.message.usage.output_tokens || 0) +
+                  (obj.message.usage.cache_read_input_tokens || 0) +
+                  (obj.message.usage.cache_creation_input_tokens || 0),
+                cache: (obj.message.usage.cache_read_input_tokens || 0) +
+                  (obj.message.usage.cache_creation_input_tokens || 0),
+              }
+              : undefined,
+          };
+          messages.push(msg);
         }
       } catch (e) {
         console.warn(

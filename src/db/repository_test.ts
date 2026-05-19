@@ -25,7 +25,7 @@ Deno.test("SessionRepository handles data persistence and retrieval", () => {
       },
     ],
   });
-  repo.saveTokenUsage("s1", 5, 5, 10);
+  repo.saveTokenUsage("s1", 5, 5, 10, 0);
 
   const projects = repo.getAllProjects();
   assertEquals(projects.length, 1);

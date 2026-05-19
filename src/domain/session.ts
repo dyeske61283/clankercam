@@ -27,6 +27,10 @@ export class Session {
     return this.tokenUsage.output;
   }
 
+  get cacheTokens(): number {
+    return this.tokenUsage.cache ?? 0;
+  }
+
   get totalTokens(): number {
     return this.tokenUsage.total;
   }

@@ -1,7 +1,7 @@
 # ClankerCam
 
-ClankerCam is a tool for synchronizing and analyzing sessions from agent tools -
-now only the Gemini CLI.
+ClankerCam is a tool for synchronizing and analyzing sessions from various agent
+tools (e.g., Gemini CLI, Claude Code, Codex).
 
 ## Development
 
@@ -11,6 +11,7 @@ now only the Gemini CLI.
 
 ### Commands
 
+- `deno task validate`: Run format, lint, and tests.
 - `deno task test`: Run all tests.
 - `deno task lint`: Lint the codebase.
 - `deno task fmt`: Format the codebase.
@@ -22,3 +23,4 @@ This project follows a modular architecture:
 - `src/domain/`: Rich domain models.
 - `src/db/`: Persistence layer.
 - `src/sync/`: Synchronization engine and source adapters.
+- `src/parser/`: Parsers for different agent session formats.

@@ -30,7 +30,7 @@ Deno.test("API returns correctly formatted JSON", async () => {
       },
     ],
   });
-  repo.saveTokenUsage("s1", 5, 5, 10);
+  repo.saveTokenUsage("s1", 5, 5, 10, 0);
 
   // Test /api/stats/global
   const resStats = await app.request("/api/stats/global");

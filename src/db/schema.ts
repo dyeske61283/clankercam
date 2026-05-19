@@ -51,9 +51,18 @@ export function initDb(path: string) {
       input_tokens INTEGER DEFAULT 0,
       output_tokens INTEGER DEFAULT 0,
       total_tokens INTEGER DEFAULT 0,
+      cache_tokens INTEGER DEFAULT 0,
       FOREIGN KEY(session_id) REFERENCES sessions(id)
     )
   `);
+
+  try {
+    db.execute(
+      `ALTER TABLE token_usage ADD COLUMN cache_tokens INTEGER DEFAULT 0`,
+    );
+  } catch (_e) {
+    // Column likely already exists
+  }
 
   db.execute(`
     CREATE TABLE IF NOT EXISTS message_token_usage (
@@ -61,9 +70,18 @@ export function initDb(path: string) {
       input_tokens INTEGER DEFAULT 0,
       output_tokens INTEGER DEFAULT 0,
       total_tokens INTEGER DEFAULT 0,
+      cache_tokens INTEGER DEFAULT 0,
       FOREIGN KEY(message_id) REFERENCES messages(id)
     )
   `);
+
+  try {
+    db.execute(
+      `ALTER TABLE message_token_usage ADD COLUMN cache_tokens INTEGER DEFAULT 0`,
+    );
+  } catch (_e) {
+    // Column likely already exists
+  }
 
   return db;
 }

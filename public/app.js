@@ -26,6 +26,9 @@ async function renderGlobal() {
   document.getElementById("stat-tokens").textContent = formatTokens(
     stats.totalTokens,
   );
+  document.getElementById("stat-cache-tokens").textContent = formatTokens(
+    stats.totalCacheTokens,
+  );
 
   const toolList = document.getElementById("list-top-tools");
   toolList.innerHTML = stats.topTools.map((t) => `
@@ -82,6 +85,16 @@ async function _showInspector(sessionId) {
 
   const res = await fetch(`/api/sessions/${sessionId}`);
   const data = await res.json();
+
+  if (data.tokenUsage) {
+    document.getElementById("inspector-tokens").textContent = `In: ${
+      formatTokens(data.tokenUsage.input)
+    } | Out: ${formatTokens(data.tokenUsage.output)} | Cache: ${
+      formatTokens(data.tokenUsage.cache)
+    } | Total: ${formatTokens(data.tokenUsage.total)}`;
+  } else {
+    document.getElementById("inspector-tokens").textContent = "No token data";
+  }
 
   const list = document.getElementById("message-list");
   list.innerHTML = data.messages.map((m) => `

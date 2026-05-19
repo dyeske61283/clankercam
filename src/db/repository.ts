@@ -9,11 +9,13 @@ export interface SessionRepository {
     inputTokens: number,
     outputTokens: number,
     totalTokens: number,
+    cacheTokens: number,
   ): void;
   getGlobalStats(): {
     totalSessions: number;
     totalToolCalls: number;
     totalTokens: number;
+    totalCacheTokens: number;
     topTools: { name: string; count: number }[];
   };
   getAllProjects(): { id: string; path: string; sessionCount: number }[];
@@ -92,10 +94,11 @@ export class SQLiteSessionRepository implements SessionRepository {
     inputTokens: number,
     outputTokens: number,
     totalTokens: number,
+    cacheTokens: number,
   ): void {
     this.db.query(
-      "INSERT INTO token_usage (session_id, input_tokens, output_tokens, total_tokens) VALUES (?, ?, ?, ?)",
-      [sessionId, inputTokens, outputTokens, totalTokens],
+      "INSERT INTO token_usage (session_id, input_tokens, output_tokens, total_tokens, cache_tokens) VALUES (?, ?, ?, ?, ?)",
+      [sessionId, inputTokens, outputTokens, totalTokens, cacheTokens],
     );
   }
 
@@ -109,6 +112,9 @@ export class SQLiteSessionRepository implements SessionRepository {
     const totalTokens = (this.db.query(
       "SELECT sum(total_tokens) FROM token_usage",
     )[0][0] as number) || 0;
+    const totalCacheTokens = (this.db.query(
+      "SELECT sum(cache_tokens) FROM token_usage",
+    )[0][0] as number) || 0;
     const topTools = this.db.query(
       "SELECT name, count(*) as count FROM tool_calls GROUP BY name ORDER BY count DESC LIMIT 10",
     );
@@ -117,6 +123,7 @@ export class SQLiteSessionRepository implements SessionRepository {
       totalSessions,
       totalToolCalls,
       totalTokens,
+      totalCacheTokens,
       topTools: topTools.map(([name, count]) => ({
         name: name as string,
         count: count as number,
@@ -172,6 +179,11 @@ export class SQLiteSessionRepository implements SessionRepository {
 
     const metadata = session ? JSON.parse(session[0] as string) : {};
 
+    const tokenUsage = this.db.query(
+      `SELECT input_tokens, output_tokens, total_tokens, cache_tokens FROM token_usage WHERE session_id = ?`,
+      [sessionId],
+    )[0];
+
     const messages = this.db.query(
       `
       SELECT id, type, content, timestamp
@@ -208,7 +220,19 @@ export class SQLiteSessionRepository implements SessionRepository {
       });
     }
 
-    return { sessionId, metadata, messages: result };
+    return {
+      sessionId,
+      metadata,
+      messages: result,
+      tokenUsage: tokenUsage
+        ? {
+          input: tokenUsage[0] as number,
+          output: tokenUsage[1] as number,
+          total: tokenUsage[2] as number,
+          cache: tokenUsage[3] as number,
+        }
+        : undefined,
+    };
   }
 
   updateSessionMetadata(
