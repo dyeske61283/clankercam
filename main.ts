@@ -87,7 +87,9 @@ async function main() {
       "  deno run --allow-read --allow-write --allow-env --allow-net main.ts sync [options]",
     );
     console.log("Options:");
-    console.log("  --agent=<name>  Filter by agent type (default: sync all agents)");
+    console.log(
+      "  --agent=<name>  Filter by agent type (default: sync all agents)",
+    );
     console.log("          Supported agents: " + VALID_AGENTS.join(", "));
     console.log("  --verbose, -v   Enable verbose logging");
     console.log(
