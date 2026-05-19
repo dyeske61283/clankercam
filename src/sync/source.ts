@@ -1,6 +1,11 @@
 import { SessionData } from "../types/session.ts";
 
-export type AgentType = "gemini" | "claudecode" | "opencode" | "generic";
+export type AgentType =
+  | "gemini"
+  | "claudecode"
+  | "opencode"
+  | "codex"
+  | "generic";
 
 export interface ProjectInfo {
   hash: string;
