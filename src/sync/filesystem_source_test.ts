@@ -1,7 +1,7 @@
 import { assertEquals } from "@std/assert";
 import { FileSystemSessionSource } from "./filesystem_source.ts";
 import { join } from "@std/path";
-import { GeminiParser } from "../parser/session_parser.ts";
+import { GeminiParser } from "../parser/gemini_parser.ts";
 
 Deno.test("FileSystemSessionSource.listProjects() lists directories in the root", async () => {
   const tempDir = await Deno.makeTempDir();

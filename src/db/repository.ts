@@ -2,7 +2,11 @@ import { DB } from "@sqlite";
 import { Message, SessionData, TokenUsage } from "../types/session.ts";
 
 export interface SessionRepository {
-  saveSession(projectHash: string, session: SessionData): void;
+  saveSession(
+    projectHash: string,
+    session: SessionData,
+    tokenUsage?: TokenUsage,
+  ): void;
   saveProject(projectHash: string): void;
   saveTokenUsage(
     sessionId: string,
@@ -11,6 +15,7 @@ export interface SessionRepository {
     totalTokens: number,
     cacheTokens: number,
   ): void;
+  sessionExists(sessionId: string): boolean;
   getGlobalStats(): {
     totalSessions: number;
     totalToolCalls: number;
@@ -47,7 +52,11 @@ export class SQLiteSessionRepository implements SessionRepository {
     ]);
   }
 
-  saveSession(projectHash: string, session: SessionData): void {
+  saveSession(
+    projectHash: string,
+    session: SessionData,
+    tokenUsage?: TokenUsage,
+  ): void {
     this.withTransaction(() => {
       const { metadata, messages } = session;
 
@@ -92,6 +101,16 @@ export class SQLiteSessionRepository implements SessionRepository {
             );
           }
         }
+      }
+
+      if (tokenUsage && tokenUsage.total > 0) {
+        this.saveTokenUsage(
+          metadata.sessionId,
+          tokenUsage.input,
+          tokenUsage.output,
+          tokenUsage.total,
+          tokenUsage.cache ?? 0,
+        );
       }
     });
   }
@@ -197,6 +216,13 @@ export class SQLiteSessionRepository implements SessionRepository {
       messageCount: messageCount as number,
       toolCallCount: toolCallCount as number,
     }));
+  }
+
+  sessionExists(sessionId: string): boolean {
+    const res = this.db.query("SELECT 1 FROM sessions WHERE id = ?", [
+      sessionId,
+    ]);
+    return res.length > 0;
   }
 
   getSession(sessionId: string) {

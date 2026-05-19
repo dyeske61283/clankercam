@@ -56,7 +56,3 @@ export class GeminiParser implements Parser {
     }
   }
 }
-
-export async function parseSessionFile(filePath: string) {
-  return await new GeminiParser().parse(filePath);
-}

@@ -86,6 +86,49 @@ async function _showInspector(sessionId) {
   const res = await fetch(`/api/sessions/${sessionId}`);
   const data = await res.json();
 
+  // Metadata
+  const tagsInput = document.getElementById("input-tags");
+  const commentInput = document.getElementById("input-comment");
+  const saveBtn = document.getElementById("btn-save-metadata");
+  const status = document.getElementById("save-status");
+
+  if (data.metadata) {
+    tagsInput.value = (data.metadata.tags || []).join(", ");
+    commentInput.value = data.metadata.comment || "";
+  }
+
+  saveBtn.onclick = async () => {
+    saveBtn.disabled = true;
+    status.textContent = "Saving...";
+
+    const tags = tagsInput.value.split(",").map((t) => t.trim()).filter((t) =>
+      t !== ""
+    );
+    const comment = commentInput.value;
+
+    try {
+      const saveRes = await fetch(`/api/sessions/${sessionId}/metadata`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ tags, comment }),
+      });
+
+      if (saveRes.ok) {
+        status.textContent = "Saved!";
+        setTimeout(() => {
+          status.textContent = "";
+        }, 3000);
+      } else {
+        status.textContent = "Error saving";
+      }
+    } catch (err) {
+      status.textContent = "Error saving";
+      console.error(err);
+    } finally {
+      saveBtn.disabled = false;
+    }
+  };
+
   if (data.tokenUsage) {
     document.getElementById("inspector-tokens").textContent = `In: ${
       formatTokens(data.tokenUsage.input)

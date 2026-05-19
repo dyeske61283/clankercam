@@ -32,21 +32,17 @@ export async function syncProjectSessions(
   let sessionCount = 0;
   for await (const session of source.listSessions(projectHash)) {
     const sessionData = session.data;
-    try {
-      repository.withTransaction(() => {
-        repository.saveSession(projectHash, sessionData);
+    const usage = session.tokenUsage;
 
-        const usage = session.tokenUsage;
-        if (usage.total > 0) {
-          repository.saveTokenUsage(
-            sessionData.metadata.sessionId,
-            usage.input,
-            usage.output,
-            usage.total,
-            usage.cache ?? 0,
-          );
-        }
-      });
+    try {
+      if (repository.sessionExists(sessionData.metadata.sessionId)) {
+        logger.warn(
+          `    Skipping duplicate session: ${sessionData.metadata.sessionId}`,
+        );
+        continue;
+      }
+
+      repository.saveSession(projectHash, sessionData, usage);
 
       logger.info(
         `Session ${sessionData.metadata.sessionId} tokens: ${
@@ -55,18 +51,10 @@ export async function syncProjectSessions(
       );
       sessionCount++;
     } catch (err: unknown) {
-      if (
-        err instanceof Error && err.message.includes("UNIQUE constraint failed")
-      ) {
-        logger.warn(
-          `    Skipping duplicate session: ${sessionData.metadata.sessionId}`,
-        );
-      } else {
-        logger.error(
-          `    Error processing session ${sessionData.metadata.sessionId}:`,
-          err,
-        );
-      }
+      logger.error(
+        `    Error processing session ${sessionData.metadata.sessionId}:`,
+        err,
+      );
     }
   }
   if (sessionCount > 0) {

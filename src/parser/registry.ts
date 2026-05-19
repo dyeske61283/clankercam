@@ -1,6 +1,6 @@
 import { Parser } from "./parser.ts";
 import { GenericParser } from "./generic_parser.ts";
-import { GeminiParser } from "./session_parser.ts";
+import { GeminiParser } from "./gemini_parser.ts";
 import { CodexParser } from "./codex_parser.ts";
 import { OpenCodeParser } from "./opencode_parser.ts";
 import { AgentType } from "../sync/source.ts";

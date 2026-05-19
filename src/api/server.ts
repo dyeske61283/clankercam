@@ -9,7 +9,8 @@ export function createApi(db: DB) {
   // CORS
   app.use("*", async (c, next) => {
     c.header("Access-Control-Allow-Origin", "*");
-    c.header("Access-Control-Allow-Methods", "GET, OPTIONS");
+    c.header("Access-Control-Allow-Methods", "GET, PATCH, OPTIONS");
+    c.header("Access-Control-Allow-Headers", "Content-Type");
     await next();
   });
 
