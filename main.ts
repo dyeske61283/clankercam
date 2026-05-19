@@ -1,3 +1,4 @@
+import { AgentType } from "./src/sync/source.ts";
 import { initDb } from "./src/db/schema.ts";
 import { syncSessions } from "./src/sync/engine.ts";
 import { FileSystemSessionSource } from "./src/sync/filesystem_source.ts";
@@ -15,6 +16,14 @@ const DB_PATH = "clankercam.db";
 const CONFIG_PATH = "config.json";
 const PORT = 8000;
 
+const VALID_AGENTS: AgentType[] = [
+  "gemini",
+  "claudecode",
+  "opencode",
+  "codex",
+  "generic",
+];
+
 async function main() {
   const args = Deno.args;
   const command = args[0];
@@ -23,6 +32,12 @@ async function main() {
     const verbose = args.includes("--verbose") || args.includes("-v");
     const agentArg = args.find((a) => a.startsWith("--agent="));
     const agentFilter = agentArg ? agentArg.split("=")[1] : null;
+
+    if (agentFilter && !VALID_AGENTS.includes(agentFilter as AgentType)) {
+      console.error(`Error: Invalid agent type '${agentFilter}'.`);
+      console.error(`Supported agents: ${VALID_AGENTS.join(", ")}`);
+      Deno.exit(1);
+    }
 
     const logger = new ConsoleSyncLogger(verbose);
     console.log("Syncing sessions...");
@@ -69,8 +84,12 @@ async function main() {
     console.log("ClankerCam - Gemini CLI Analytics");
     console.log("Usage:");
     console.log(
-      "  deno run --allow-read --allow-write --allow-env --allow-net main.ts sync [--agent=<name>] [--verbose]",
+      "  deno run --allow-read --allow-write --allow-env --allow-net main.ts sync [options]",
     );
+    console.log("Options:");
+    console.log("  --agent=<name>  Filter by agent type (default: sync all agents)");
+    console.log("          Supported agents: " + VALID_AGENTS.join(", "));
+    console.log("  --verbose, -v   Enable verbose logging");
     console.log(
       "  deno run --allow-read --allow-write --allow-env --allow-net main.ts serve",
     );
