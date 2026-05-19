@@ -3,7 +3,9 @@ import { OpenCodeParser } from "./opencode_parser.ts";
 
 Deno.test("OpenCodeParser should parse the example log file", async () => {
   const parser = new OpenCodeParser();
-  const result = await parser.parse("./opencode_example_session_log.jsonl");
+  const result = await parser.parse(
+    "./logs/opencode_example_session_log.jsonl",
+  );
 
   if (!result) {
     throw new Error("Result is null");
