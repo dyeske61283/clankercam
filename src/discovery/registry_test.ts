@@ -5,12 +5,18 @@ import * as configLoader from "../config/loader.ts";
 
 Deno.test("Registry should load and merge paths from DiscoveryService and config", async () => {
   const discoveryService = {
-    discover: () => Promise.resolve(["/path/a"]),
+    discover: () => Promise.resolve([{ path: "/path/a", agentType: "gemini" }]),
   };
   const mockConfigLoader = {
     loadConfig: (_path: string) =>
       Promise.resolve({
-        sources: [{ id: "b", name: "b", type: "filesystem", path: "/path/b" }],
+        sources: [{
+          id: "b",
+          name: "b",
+          type: "filesystem",
+          path: "/path/b",
+          agentType: "claudecode",
+        }],
       }),
   };
 
@@ -21,5 +27,8 @@ Deno.test("Registry should load and merge paths from DiscoveryService and config
   );
   const sources = await registry.getSources();
 
-  assertEquals(sources, ["/path/a", "/path/b"]);
+  assertEquals(sources, [
+    { path: "/path/a", agentType: "gemini" },
+    { path: "/path/b", agentType: "claudecode" },
+  ]);
 });

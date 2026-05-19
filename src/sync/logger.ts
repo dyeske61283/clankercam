@@ -20,7 +20,7 @@ export class ConsoleSyncLogger implements SyncLogger {
   }
 
   error(message: string, error?: unknown): void {
-    // We usually want to log errors even if not verbose, 
+    // We usually want to log errors even if not verbose,
     // but following the current logic in engine.ts:
     // Some errors were logged unconditionally, others were conditional.
     // Let's look closer at engine.ts again.

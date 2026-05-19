@@ -1,6 +1,7 @@
 import { assertEquals } from "@std/assert";
 import { FileSystemSessionSource } from "./filesystem_source.ts";
 import { join } from "@std/path";
+import { GeminiParser } from "../parser/session_parser.ts";
 
 Deno.test("FileSystemSessionSource.listProjects() lists directories in the root", async () => {
   const tempDir = await Deno.makeTempDir();
@@ -17,6 +18,7 @@ Deno.test("FileSystemSessionSource.listProjects() lists directories in the root"
       "Test FS",
       "gemini",
       tempDir,
+      new GeminiParser(),
     );
     const projects = [];
     for await (const project of source.listProjects()) {
@@ -56,6 +58,7 @@ Deno.test("FileSystemSessionSource.listSessions() lists sessions in project/chat
       "Test FS",
       "gemini",
       tempDir,
+      new GeminiParser(),
     );
     const sessions = [];
     for await (const session of source.listSessions(projectHash)) {
@@ -95,6 +98,7 @@ Deno.test("FileSystemSessionSource.listSessions() handles custom subdirectory", 
       "Custom FS",
       "claudecode",
       tempDir,
+      new GeminiParser(),
       "history",
     );
     const sessions = [];

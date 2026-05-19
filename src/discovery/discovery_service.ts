@@ -1,36 +1,62 @@
 import { exists } from "@std/fs";
 import { join } from "@std/path";
+import { AgentType } from "../sync/source.ts";
 
-const DEFAULT_PROBE_PATHS = [
-  // Existing
-  "/tmp/gemini/logs",
-  "/tmp/opencode/logs",
-  "/tmp/claudecode/logs",
-  join(Deno.env.get("HOME") || "", ".gemini/tmp"),
+export interface DiscoveredSource {
+  path: string;
+  agentType: AgentType;
+}
+
+const DEFAULT_PROBE_PATHS: DiscoveredSource[] = [
+  // Gemini
+  {
+    path: join(Deno.env.get("HOME") || "", ".gemini/tmp"),
+    agentType: "gemini",
+  },
+  { path: "/tmp/gemini/logs", agentType: "gemini" },
 
   // Claude Code
-  join(Deno.env.get("HOME") || "", ".claude/logs"),
+  {
+    path: join(Deno.env.get("HOME") || "", ".claude/logs"),
+    agentType: "claudecode",
+  },
+  { path: "/tmp/claudecode/logs", agentType: "claudecode" },
 
   // OpenCode
-  join(Deno.env.get("HOME") || "", ".local/share/opencode/log"),
+  {
+    path: join(Deno.env.get("HOME") || "", ".local/share/opencode/log"),
+    agentType: "opencode",
+  },
+  { path: "/tmp/opencode/logs", agentType: "opencode" },
 
-  // Roo Code (VS Code logs)
-  join(Deno.env.get("HOME") || "", "Library/Application Support/Code/logs"), // macOS
-  join(Deno.env.get("HOME") || "", ".config/Code/logs"), // Linux
+  // Roo Code (VS Code logs) - mapped to generic for now
+  {
+    path: join(
+      Deno.env.get("HOME") || "",
+      "Library/Application Support/Code/logs",
+    ),
+    agentType: "generic",
+  },
+  {
+    path: join(Deno.env.get("HOME") || "", ".config/Code/logs"),
+    agentType: "generic",
+  },
 
   // Codex CLI
-  join(Deno.env.get("HOME") || "", ".codex/logs"),
+  {
+    path: join(Deno.env.get("HOME") || "", ".codex/logs"),
+    agentType: "generic",
+  },
 ];
 
 export class DiscoveryService {
-  constructor(private searchPaths: string[] = DEFAULT_PROBE_PATHS) {}
+  constructor(private probePaths: DiscoveredSource[] = DEFAULT_PROBE_PATHS) {}
 
-  async discover(): Promise<string[]> {
-    const discovered: string[] = [];
-    for (const path of this.searchPaths) {
-      const logsPath = path;
-      if (await exists(logsPath)) {
-        discovered.push(logsPath);
+  async discover(): Promise<DiscoveredSource[]> {
+    const discovered: DiscoveredSource[] = [];
+    for (const probe of this.probePaths) {
+      if (await exists(probe.path)) {
+        discovered.push(probe);
       }
     }
     return discovered;

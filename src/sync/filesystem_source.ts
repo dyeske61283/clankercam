@@ -1,6 +1,6 @@
 import { join } from "@std/path";
 import { SessionData } from "../types/session.ts";
-import { parseSessionFile } from "../parser/session_parser.ts";
+import { Parser } from "../parser/parser.ts";
 import { AgentType, ProjectInfo, SessionSource } from "./source.ts";
 
 export class FileSystemSessionSource implements SessionSource {
@@ -9,6 +9,7 @@ export class FileSystemSessionSource implements SessionSource {
     public readonly name: string,
     public readonly agentType: AgentType,
     private readonly rootDir: string,
+    private readonly parser: Parser,
     private readonly sessionSubdir: string = "chats",
   ) {}
 
@@ -37,7 +38,7 @@ export class FileSystemSessionSource implements SessionSource {
         (entry.name.endsWith(".jsonl") || entry.name.endsWith(".json"))
       ) {
         const filePath = join(chatsPath, entry.name);
-        const session = await parseSessionFile(filePath);
+        const session = await this.parser.parse(filePath);
         if (session) {
           yield session;
         }

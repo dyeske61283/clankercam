@@ -6,13 +6,17 @@ import { NoopSyncLogger, SyncLogger } from "./logger.ts";
 
 export async function syncSessions(
   db: DB,
-  source: SessionSource,
+  sources: SessionSource | SessionSource[],
   logger: SyncLogger = new NoopSyncLogger(),
 ) {
   const repository = new SQLiteSessionRepository(db);
+  const sourceList = Array.isArray(sources) ? sources : [sources];
 
-  for await (const project of source.listProjects()) {
-    await syncProjectSessions(project.hash, source, repository, logger);
+  for (const source of sourceList) {
+    logger.info(`Syncing from source: ${source.name} (${source.agentType})`);
+    for await (const project of source.listProjects()) {
+      await syncProjectSessions(project.hash, source, repository, logger);
+    }
   }
 }
 

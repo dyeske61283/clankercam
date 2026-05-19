@@ -8,6 +8,7 @@ import { DiscoveryService } from "./src/discovery/discovery_service.ts";
 import { Registry } from "./src/discovery/registry.ts";
 import * as configLoader from "./src/config/loader.ts";
 import { ConsoleSyncLogger } from "./src/sync/logger.ts";
+import { ParserRegistry } from "./src/parser/registry.ts";
 
 const _GEMINI_TMP_DIR = join(Deno.env.get("HOME") || "", ".gemini/tmp");
 const DB_PATH = "clankercam.db";
@@ -20,25 +21,38 @@ async function main() {
 
   if (command === "sync") {
     const verbose = args.includes("--verbose") || args.includes("-v");
+    const agentArg = args.find((a) => a.startsWith("--agent="));
+    const agentFilter = agentArg ? agentArg.split("=")[1] : null;
+
     const logger = new ConsoleSyncLogger(verbose);
     console.log("Syncing sessions...");
     const db = initDb(DB_PATH);
 
     const discoveryService = new DiscoveryService();
     const registry = new Registry(discoveryService, configLoader, CONFIG_PATH);
+    const parserRegistry = new ParserRegistry();
 
-    const sourcePaths = await registry.getSources();
+    let discoveredSources = await registry.getSources();
 
-    for (const path of sourcePaths) {
-      logger.info(`Syncing source: ${path}`);
-      const source = new FileSystemSessionSource(
-        path,
-        `Source at ${path}`,
-        "gemini",
-        path,
+    if (agentFilter) {
+      discoveredSources = discoveredSources.filter((ds) =>
+        ds.agentType === agentFilter
       );
-      await syncSessions(db, source, logger);
+      logger.info(`Filtering sources by agent: ${agentFilter}`);
     }
+
+    const sources = discoveredSources.map((ds) => {
+      const parser = parserRegistry.getParser(ds.agentType);
+      return new FileSystemSessionSource(
+        ds.path,
+        `Source at ${ds.path}`,
+        ds.agentType,
+        ds.path,
+        parser,
+      );
+    });
+
+    await syncSessions(db, sources, logger);
 
     db.close();
     console.log("Sync complete!");
@@ -55,7 +69,7 @@ async function main() {
     console.log("ClankerCam - Gemini CLI Analytics");
     console.log("Usage:");
     console.log(
-      "  deno run --allow-read --allow-write --allow-env --allow-net main.ts sync",
+      "  deno run --allow-read --allow-write --allow-env --allow-net main.ts sync [--agent=<name>] [--verbose]",
     );
     console.log(
       "  deno run --allow-read --allow-write --allow-env --allow-net main.ts serve",
