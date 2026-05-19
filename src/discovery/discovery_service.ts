@@ -29,19 +29,6 @@ const DEFAULT_PROBE_PATHS: DiscoveredSource[] = [
   },
   { path: "/tmp/opencode/logs", agentType: "opencode" },
 
-  // Roo Code (VS Code logs) - mapped to generic for now
-  {
-    path: join(
-      Deno.env.get("HOME") || "",
-      "Library/Application Support/Code/logs",
-    ),
-    agentType: "generic",
-  },
-  {
-    path: join(Deno.env.get("HOME") || "", ".config/Code/logs"),
-    agentType: "generic",
-  },
-
   // Codex CLI
   {
     path: join(Deno.env.get("HOME") || "", ".codex/logs"),
