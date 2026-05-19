@@ -1,4 +1,5 @@
 import { Parser } from "./parser.ts";
+import { GenericParser } from "./generic_parser.ts";
 import { GeminiParser } from "./session_parser.ts";
 import { CodexParser } from "./codex_parser.ts";
 import { OpenCodeParser } from "./opencode_parser.ts";
@@ -16,7 +17,7 @@ export class ParserRegistry {
     this.register("claudecode", new ClaudeCodeParser());
     this.register("opencode", new OpenCodeParser());
     this.register("codex", new CodexParser());
-    this.register("generic", new GeminiParser());
+    this.register("generic", new GenericParser());
   }
 
   register(agentType: AgentType, parser: Parser) {
